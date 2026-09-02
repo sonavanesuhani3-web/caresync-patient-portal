@@ -49,15 +49,15 @@ def is_valid_patient_id(patient_id: str) -> bool:
     Returns:
         bool: True if the ID is valid, False otherwise
     """
-    # Import the regular expression module for pattern matching
     import re
     
-    # Define the required pattern: PT- followed by exactly 6 digits
-    pattern = r"^PT-\d{6}$"
+    # Strip whitespace from both ends of the input
+    # This handles cases where a user pastes an ID with an accidental space
+    patient_id = patient_id.strip()
     
-    # Check if the patient_id matches the pattern
-    # re.match returns a match object if found, or None if not found
+    pattern = r"^PT-\d{6}$"
     return bool(re.match(pattern, patient_id))
+
 
 
 

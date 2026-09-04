@@ -16,7 +16,7 @@ connection = mysql.connector.connect(
     host='localhost',
     port=3306,
     user='root',
-    password='Suhani@12345',
+    password='',
     database='caresync'
 )
 cursor = connection.cursor(dictionary=True)  # dictionary=True gives us column names

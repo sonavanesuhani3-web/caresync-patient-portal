@@ -24,7 +24,7 @@ connection = mysql.connector.connect(
     host='localhost',      # MySQL is running on this same computer
     port=3306,             # Default MySQL port
     user='root',           # The administrator user
-    password='Suhani@12345',  # Your MySQL root password
+    password='',  # Your MySQL root password
     database='caresync'    # The database we created
 )
 cursor = connection.cursor()

@@ -29,7 +29,7 @@ def get_db():
         host='localhost',
         port=3306,
         user='root',
-        password='',
+        password='Suhani@12345',
         database='caresync'
     )
 

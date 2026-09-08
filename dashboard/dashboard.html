@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CareSync Hospital Dashboard</title>
+
+    <!--
+        Vue 3 is loaded from a CDN (Content Delivery Network).
+        This means no installation is needed.
+        The browser downloads Vue automatically when the page opens.
+    -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <style>
+        /* ── Reset and base ──────────────────────────────── */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+        }
+
+        /* ── Top navigation bar ──────────────────────────── */
+        .navbar {
+            background: #1f3864;
+            color: #ffffff;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .navbar h1 { font-size: 22px; font-weight: 600; }
+        .navbar span { font-size: 14px; opacity: 0.8; }
+
+        /* ── Page wrapper ────────────────────────────────── */
+        .page { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+        /* ── Section headings ────────────────────────────── */
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f3864;
+            margin-bottom: 16px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #1f3864;
+        }
+
+        /* ── Summary cards ───────────────────────────────── */
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 24px 20px;
+            border-left: 4px solid #1f3864;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .card .label {
+            font-size: 13px;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .card .value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1f3864;
+        }
+        .card.red   { border-left-color: #c0392b; }
+        .card.red .value { color: #c0392b; }
+        .card.green { border-left-color: #1a7a4a; }
+        .card.green .value { color: #1a7a4a; }
+
+        /* ── Tab buttons ─────────────────────────────────── */
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab-btn {
+            padding: 8px 20px;
+            border: 2px solid #1f3864;
+            background: #ffffff;
+            color: #1f3864;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+        .tab-btn.active { background: #1f3864; color: #ffffff; }
+
+        /* ── Search box ──────────────────────────────────── */
+        .search-box {
+            width: 100%;
+            max-width: 360px;
+            padding: 8px 14px;
+            border: 1px solid #cccccc;
+            border-radius: 4px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            outline: none;
+        }
+        .search-box:focus { border-color: #1f3864; }
+
+        /* ── Data table ──────────────────────────────────── */
+        .table-wrap {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            overflow-x: auto;
+            margin-bottom: 40px;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th {
+            background: #1f3864;
+            color: #ffffff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        td { padding: 10px 16px; border-bottom: 1px solid #f0f0f0; }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background: #fafafa; }
+
+        /* ── Status badges ───────────────────────────────── */
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-paid     { background: #d4edda; color: #155724; }
+        .badge-pending  { background: #fff3cd; color: #856404; }
+        .badge-partial  { background: #d1ecf1; color: #0c5460; }
+        .badge-rejected { background: #f8d7da; color: #721c24; }
+
+        /* ── Loading and error states ────────────────────── */
+        .loading { text-align: center; padding: 40px; color: #888; font-size: 16px; }
+        .error   { text-align: center; padding: 40px; color: #c0392b; font-size: 15px; }
+
+        /* ── Task 8: Patient Search Box Design ───────────── */
+        .single-search-box {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        .search-btn {
+            padding: 8px 18px;
+            background: #1f3864;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .search-btn:hover { background: #142442; }
+        .patient-card {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #1f3864;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Navigation Bar -->
+<div class="navbar">
+    <h1>CareSync Hospital Dashboard</h1>
+    <span>Live Data  |  MySQL  |  FastAPI  |  Vue.js</span>
+</div>
+
+<!-- Main application div -->
+<div id="app">
+    <div class="page">
+
+        <!-- Loading state -->
+        <div v-if="loading" class="loading">Loading hospital data...</div>
+
+        <!-- Error state -->
+        <div v-else-if="error" class="error">
+            Cannot connect to the backend server.<br/>
+            Make sure uvicorn is running in your Command Prompt.<br/>
+            Command: uvicorn main:app --reload
+        </div>
+
+        <!-- Main content -->
+        <div v-else>
+
+            <!-- ── Task 8: Patient ID Search Section ──────────────── -->
+            <div class="single-search-box">
+                <h3 style="color: #1f3864; margin-bottom: 12px;">Search Patient Details (by ID)</h3>
+                <div style="display: flex; align-items: center;">
+                    <input 
+                        type="number" 
+                        v-model="searchId" 
+                        placeholder="Enter Patient ID" 
+                        class="search-box" 
+                        style="margin-bottom: 0;"
+                        @keyup.enter="searchPatientById"
+                    />
+                    <button class="search-btn" @click="searchPatientById">Search</button>
+                </div>
+
+                <!-- Single Patient Result View -->
+                <div v-if="singlePatient" class="patient-card">
+                    <h4 style="margin-bottom: 8px; color: #1f3864;">Patient Details</h4>
+                    <p><strong>ID:</strong> {{ singlePatient.patient_id }}</p>
+                    <p><strong>Name:</strong> {{ singlePatient.full_name }}</p>
+                    <p><strong>Gender:</strong> {{ singlePatient.gender }}</p>
+                    <p><strong>Blood Group:</strong> {{ singlePatient.blood_group }}</p>
+                    <p><strong>Registered On:</strong> {{ singlePatient.registered_on }}</p>
+                </div>
+                
+                <p v-if="searchError" style="color: #c0392b; margin-top: 12px; font-weight: 600;">
+                    {{ searchError }}
+                </p>
+            </div>
+
+            <!-- ── Summary Cards ────────────────────────────────────── -->
+            <p class="section-title">Hospital Summary</p>
+            <div class="cards">
+                <div class="card">
+                    <div class="label">Total Patients</div>
+                    <div class="value">{{ summary.total_patients }}</div>
+                </div>
+                <div class="card">
+                    <div class="label">Active Doctors</div>
+                    <div class="value">{{ summary.total_doctors }}</div>
+                </div>
+                <div class="card">
+                    <div class="label">Total Appointments</div>
+                    <div class="value">{{ summary.total_appointments }}</div>
+                </div>
+                <div class="card">
+                    <div class="label">Total Bills</div>
+                    <div class="value">{{ summary.total_bills }}</div>
+                </div>
+                <div class="card red">
+                    <div class="label">Rejection Rate</div>
+                    <div class="value">{{ summary.rejection_rate }}%</div>
+                </div>
+                <div class="card green">
+                    <div class="label">Revenue Collected</div>
+                    <div class="value">Rs {{ formatNumber(summary.total_revenue) }}</div>
+                </div>
+            </div>
+
+            <!-- ── Tab Buttons ──────────────────────────────────────── -->
+            <div class="tabs">
+                <button class="tab-btn" :class="{ active: activeTab === 'patients' }"
+                        @click="activeTab = 'patients'">Patients</button>
+                <button class="tab-btn" :class="{ active: activeTab === 'billing' }"
+                        @click="activeTab = 'billing'">Billing</button>
+                <button class="tab-btn" :class="{ active: activeTab === 'doctors' }"
+                        @click="activeTab = 'doctors'">Doctors</button>
+            </div>
+
+            <!-- ── Patients Tab ─────────────────────────────────────── -->
+            <div v-if="activeTab === 'patients'">
+                <input
+                    class="search-box"
+                    v-model="patientSearch"
+                    placeholder="Search patient by name..."
+                />
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Full Name</th>
+                                <th>Gender</th>
+                                <th>Blood Group</th>
+                                <th>Date of Birth</th>
+                                <th>Registered On</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="p in filteredPatients" :key="p.patient_id">
+                                <td>{{ p.patient_id }}</td>
+                                <td>{{ p.full_name }}</td>
+                                <td>{{ p.gender }}</td>
+                                <td>{{ p.blood_group }}</td>
+                                <td>{{ p.date_of_birth }}</td>
+                                <td>{{ p.registered_on }}</td>
+                            </tr>
+                            <tr v-if="filteredPatients.length === 0">
+                                <td colspan="6" style="text-align:center; color:#888;">
+                                    No patients match your search.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── Billing Tab ──────────────────────────────────────── -->
+            <div v-if="activeTab === 'billing'">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Bill ID</th>
+                                <th>Patient Name</th>
+                                <th>Total Amount</th>
+                                <th>Amount Paid</th>
+                                <th>Status</th>
+                                <th>Bill Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="b in bills" :key="b.bill_id">
+                                <td>{{ b.bill_id }}</td>
+                                <td>{{ b.patient_name }}</td>
+                                <td>Rs {{ b.total_amount.toFixed(2) }}</td>
+                                <td>Rs {{ b.amount_paid.toFixed(2) }}</td>
+                                <td>
+                                    <span class="badge" :class="badgeClass(b.status)">
+                                        {{ b.status }}
+                                    </span>
+                                </td>
+                                <td>{{ b.bill_date }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ── Doctors Tab ──────────────────────────────────────── -->
+            <div v-if="activeTab === 'doctors'">
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Full Name</th>
+                                <th>Specialisation</th>
+                                <th>Completed Appointments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="d in doctors" :key="d.doctor_id">
+                                <td>{{ d.doctor_id }}</td>
+                                <td>{{ d.full_name }}</td>
+                                <td>{{ d.specialisation }}</td>
+                                <td>{{ d.total_appointments }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div> <!-- end v-else -->
+    </div> <!-- end page -->
+</div> <!-- end #app -->
+
+<script>
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                loading:  true,
+                error:    false,
+
+                activeTab: 'patients',
+
+                patientSearch: '',
+
+                // Task 8 Search states
+                searchId: '',
+                singlePatient: null,
+                searchError: '',
+
+                summary:  {},
+                patients: [],
+                bills:    [],
+                doctors:  [],
+            };
+        },
+
+        computed: {
+            filteredPatients() {
+                const term = this.patientSearch.toLowerCase();
+                if (!term) return this.patients;
+                return this.patients.filter(p =>
+                    p.full_name.toLowerCase().includes(term)
+                );
+            },
+        },
+
+        methods: {
+            badgeClass(status) {
+                const map = {
+                    'Paid':          'badge-paid',
+                    'Pending':       'badge-pending',
+                    'Partially Paid':'badge-partial',
+                    'Rejected':      'badge-rejected',
+                };
+                return map[status] || '';
+            },
+
+            formatNumber(n) {
+                return Number(n).toLocaleString('en-IN');
+            },
+
+            // Task 8: Patient ID Search Method
+            async searchPatientById() {
+                this.searchError = '';
+                this.singlePatient = null;
+
+                if (!this.searchId) {
+                    this.searchError = 'Please enter a Patient ID.';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`http://127.0.0.1:8000/patients/${this.searchId}`);
+                    
+                    if (response.status === 404) {
+                        this.searchError = 'Patient not found.';
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch patient data.');
+                    }
+
+                    const data = await response.json();
+                    this.singlePatient = data;
+                } catch (err) {
+                    this.searchError = 'Unable to connect to server. Ensure FastAPI backend is running.';
+                }
+            },
+
+            async fetchAll() {
+                try {
+                    const base = 'http://127.0.0.1:8000';
+
+                    const [s, p, b, d] = await Promise.all([
+                        fetch(`${base}/summary`).then(r => r.json()),
+                        fetch(`${base}/patients`).then(r => r.json()),
+                        fetch(`${base}/billing`).then(r => r.json()),
+                        fetch(`${base}/doctors`).then(r => r.json()),
+                    ]);
+
+                    this.summary  = s;
+                    this.patients = p.patients;
+                    this.bills    = b.bills;
+                    this.doctors  = d.doctors;
+                    this.loading  = false;
+
+                } catch (err) {
+                    console.error('API error:', err);
+                    this.loading = false;
+                    this.error   = true;
+                }
+            },
+        },
+
+        mounted() {
+            this.fetchAll();
+        },
+
+    }).mount('#app');
+</script>
+
+</body>
+</html>

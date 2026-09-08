@@ -190,3 +190,35 @@ def get_doctors():
     db.close()
 
     return {'doctors': doctors}
+
+# ── ENDPOINT 6: Appointments by Patient ──────────────────────────────────────
+# URL: http://127.0.0.1:8000/patients/{patient_id}/appointments
+# Returns: list of all appointments for a specific patient
+@app.get("/patients/{patient_id}/appointments")
+def get_appointments_by_patient(patient_id: int):
+    db     = get_db()
+    cursor = db.cursor(dictionary=True)
+
+    cursor.execute(
+        '''
+        SELECT 
+            a.appointment_id,
+            a.patient_id,
+            p.full_name AS patient_name,
+            a.doctor_id,
+            a.appointment_date,
+            a.status,
+            a.reason
+        FROM appointment a
+        JOIN patient p ON a.patient_id = p.patient_id
+        WHERE a.patient_id = %s
+        ''',
+        (patient_id,)
+    )
+    appointments = cursor.fetchall()
+
+    cursor.close()
+    db.close()
+
+    # If no appointments exist, returns empty list [] automatically
+    return {"appointments": appointments}
